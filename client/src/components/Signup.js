@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Header from "./HeaderLogout";
+import Header from "./Header";
 
 function Signup() {
   const history = useNavigate();

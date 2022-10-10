@@ -25,11 +25,12 @@ function OTP() {
 
   React.useEffect(() => {
     console.log(otp, otpFetched);
-    if (otp == String(otpFetched)) {
-      console.log("OTP Verified");
+
+    if (otp === String(otpFetched)) {
+      localStorage.setItem("loggedIn", true);
       history("/user");
     }
-  }, [otp]);
+  }, [otp, history, otpFetched]);
 
   React.useEffect(() => {
     sendRequest();

@@ -24,15 +24,19 @@ function Signup() {
   }
 
   const sendRequest = async () => {
-    const res = await axios.post("http://localhost:5000/api/login", { email: inputs.email, password: inputs.password }).catch((err) => console.log(err));
+    await axios.post("http://localhost:5000/api/login", { email: inputs.email, password: inputs.password }).then((res) => {
+      console.log(res.data);
+      if (res.data.message === "Logged in!") {
+        console.log("test");
+        history("/verification");
+      }
+    });
   };
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    sendRequest().then(() => {
-      history("/verification");
-    });
+    sendRequest();
   }
 
   return (

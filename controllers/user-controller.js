@@ -14,18 +14,46 @@ const transporter = nodemailer.createTransport({
 });
 
 const signup = async (req, res, next) => {
+  let invalidPassMessage = "Password must have: \n";
+
   const { name, email, password } = req.body;
   let existingUser;
 
   try {
     existingUser = await User.findOne({ email: req.body.email }); // Find user by email
   } catch (err) {
-    console.log(err);
+    return res.status(400).json({ message: "User already exists!" });
   }
 
   if (existingUser) {
     return res.status(400).json({ message: "User already exists!" }); // Return error if user already exists
   }
+
+  // Check if password is valid, have symbols, numbers, and letters, capital letters, and is at least 6 characters long.
+  if (!password.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{6,}$/gm)) {
+    if (!password.match(/^(?=.*[!@#$%^&*])/gm)) {
+      invalidPassMessage = invalidPassMessage + "1 special character!\n";
+    }
+    // Check if the password have number
+    if (!password.match(/^(?=.*\d)/gm)) {
+      invalidPassMessage = invalidPassMessage + "1 number!\n";
+    }
+    // Check if the password have lowercase letter
+    if (!password.match(/^(?=.*[a-z])/gm)) {
+      invalidPassMessage = invalidPassMessage + "1 lowercase letter!\n";
+    }
+    // Check if the password have uppercase letter
+    if (!password.match(/^(?=.*[A-Z])/gm)) {
+      invalidPassMessage = invalidPassMessage + "1 uppercase letter!\n";
+    }
+    // Check if the password have 8 characters
+    if (!password.match(/^(?=.{8,})/gm)) {
+      invalidPassMessage = invalidPassMessage + "atleast 8 characters!\n";
+    }
+
+    return res.status(400).json({ message: invalidPassMessage });
+  }
+
   const hashedPassword = bcrypt.hashSync(password); // Hash password
   // Hash password
 
@@ -50,7 +78,7 @@ const login = async (req, res, next) => {
   try {
     existingUser = await User.findOne({ email: email }); // Find user by email
   } catch {
-    return new Error(err);
+    return res.status(400).json({ message: "User not found. Please signup!" });
   }
 
   if (!existingUser) {
@@ -67,28 +95,7 @@ const login = async (req, res, next) => {
   return res.status(200).json({ message: "Logged in!", user: userLogged });
 };
 
-// const verifyToken = (req, res, next) => {
-//   const cookies = req.headers.cookie;
-//   const token = cookies.split("=")[1];
-
-//   if (!token) {
-//     res.status(404).json({ message: "No token found" });
-//   }
-//   jwt.verify(String(token), JWT_SECRET_KEY, (err, user) => {
-//     if (err) {
-//       return res.status(400).json({ message: "Invalid Token" });
-//     }
-//     console.log(user.id);
-//     req.id = user.id;
-//   });
-//   next();
-// };
-
 const getUser = async (req, res, next) => {
-  // Get the database and send a json response
-  // Get the database and send a json response based on the user logged in (userLogged) find
-  // the user in the database and send the user's data as a json response
-
   let existingUser;
   try {
     existingUser = await User.findOne({ email: userLogged }); // Find user by email
@@ -104,6 +111,16 @@ const getUser = async (req, res, next) => {
 };
 
 const verification = async (req, res, next) => {
+  try {
+    existingUser = await User.findOne({ email: userLogged }); // Find user by email
+  } catch {
+    return new Error(err);
+  }
+
+  if (!existingUser) {
+    return res.status(400).json({ message: "User not found. Please signup!" }); // Return error if user doesn't exist
+  }
+
   const otpCode = Math.floor(1000 + Math.random() * 9000);
 
   const options = {
@@ -120,18 +137,7 @@ const verification = async (req, res, next) => {
       console.log("Email sent: " + info.response);
     }
   });
-  // Generate a 4 digit OTP code that expires in 10 seconds that is based on User model otpCode field
-  try {
-    existingUser = await User.findOne({ email: userLogged }); // Find user by email
-  } catch {
-    return new Error(err);
-  }
 
-  if (!existingUser) {
-    return res.status(400).json({ message: "User not found. Please signup!" }); // Return error if user doesn't exist
-  }
-
-  // Send a code as a json response
   return res.status(200).json({ message: `OTP code sent! to ${userLogged}`, code: otpCode });
 };
 

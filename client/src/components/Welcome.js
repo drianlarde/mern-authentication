@@ -3,6 +3,7 @@ import HeaderLogout from "./HeaderLogout";
 
 function Welcome() {
   const [data, setData] = useState();
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     const sendRequest = async () => {
@@ -13,8 +14,10 @@ function Welcome() {
       const data = await res.json();
       setData(data);
     };
-
-    sendRequest();
+    if (localStorage.getItem("loggedIn") === "true") {
+      setLoggedIn(true);
+      sendRequest();
+    }
   }, []);
 
   return (
@@ -22,7 +25,7 @@ function Welcome() {
       <HeaderLogout />
 
       <div className="welcome-ctn">
-        <h1>Welcome {data?.user} 👋</h1>
+        <h1>{loggedIn ? `Welcome ${data?.user} 👋` : `Please Login First!`}</h1>
       </div>
     </div>
   );
