@@ -1,7 +1,6 @@
 import React from "react";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import { useNavigate } from "react-router-dom";
-import Header from "./Header";
 
 function OTP() {
   const history = useNavigate();
@@ -24,8 +23,6 @@ function OTP() {
   };
 
   React.useEffect(() => {
-    console.log(otp, otpFetched);
-
     if (otp === String(otpFetched)) {
       localStorage.setItem("loggedIn", true);
       history("/user");
@@ -38,8 +35,6 @@ function OTP() {
 
   return (
     <div>
-      <Header />
-
       <div className="otp-ctn">
         <h1>Verification</h1>
         <MuiOtpInput value={otp} onChange={handleChange} />

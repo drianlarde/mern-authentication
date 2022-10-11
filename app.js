@@ -4,7 +4,9 @@ const router = require("./routes/user-routes"); // Import user routes
 // const cookieParser = require("cookie-parser"); // Import cookie parser
 const cors = require("cors"); // Import cors
 const app = express(); // Create express app
+require("dotenv").config(); // Import dotenv
 // app.use(cors({ credentials: true, origin: "http://localhost:3000" })); // Use cors
+
 app.use(
   cors({
     credentials: true,

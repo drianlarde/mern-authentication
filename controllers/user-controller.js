@@ -3,6 +3,7 @@
 const User = require("../model/User"); // Import user model
 const bcrypt = require("bcryptjs"); // Import bcrypt
 const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
 let userLogged = "";
 
 const transporter = nodemailer.createTransport({
@@ -90,9 +91,10 @@ const login = async (req, res, next) => {
   if (!isPasswordCorrect) {
     return res.status(400).json({ message: "Invalid email / password!" }); // Return error if password is incorrect
   }
+  const accessToken = jwt.sign({ existingUser }, process.env.ACCESS_TOKEN_SECRET);
 
   userLogged = existingUser.email;
-  return res.status(200).json({ message: "Logged in!", user: userLogged });
+  return res.status(200).json({ message: "Logged in!", user: userLogged, accessToken: accessToken });
 };
 
 const getUser = async (req, res, next) => {

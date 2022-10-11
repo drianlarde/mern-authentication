@@ -3,6 +3,9 @@ import { AppBar, Toolbar, Typography, Box, Tab, Tabs } from "@mui/material";
 import { Link } from "react-router-dom";
 
 function Header() {
+  // Get local Storage loggedIn
+  let isLoggedIn = localStorage.getItem("loggedIn") === "true" ? true : false;
+
   return (
     <div>
       <AppBar
@@ -17,16 +20,22 @@ function Header() {
           color: "#000",
         }}
       >
-        <Toolbar
-        // Remove drop shadow
-        >
+        <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             OTP
           </Typography>
           <Box>
             <Tabs textColor="inherit">
-              <Tab label="Login" component={Link} to="/login" />
-              <Tab label="Signup" component={Link} to="/signup" />
+              {isLoggedIn ? (
+                <>
+                  <Tab label="Logout" component={Link} to="/login" />
+                </>
+              ) : (
+                <>
+                  <Tab label="Login" component={Link} to="/login" />
+                  <Tab label="Signup" component={Link} to="/signup" />
+                </>
+              )}
             </Tabs>
           </Box>
         </Toolbar>

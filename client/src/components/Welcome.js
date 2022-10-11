@@ -1,32 +1,44 @@
-import React, { useEffect, useState } from "react";
-import HeaderLogout from "./HeaderLogout";
+import React, { useEffect, useState, useContext } from "react";
+import axios from "axios";
+import { Context } from "./Storage";
 
 function Welcome() {
-  const [data, setData] = useState();
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [mainData, setMainData] = useState({});
+  const [state, setState] = useContext(Context);
 
   useEffect(() => {
     const sendRequest = async () => {
-      const res = await fetch("http://localhost:5000/api/user", {
-        method: "GET",
+      await axios.get("http://localhost:5000/api/user", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then((res) => {
+        setMainData(res.data);
       });
-
-      const data = await res.json();
-      setData(data);
     };
-    if (localStorage.getItem("loggedIn") === "true") {
-      setLoggedIn(true);
-      sendRequest();
-    }
-  }, []);
+
+    sendRequest();
+    setState((prev) => ({ ...prev, isLoggedIn: true }));
+  }, [setState]);
 
   return (
     <div>
-      <HeaderLogout />
-
+      <p>{state.isLoggedIn ? `Welcome ${mainData.user}` : "Please login to view this page"}</p>
       <div className="welcome-ctn">
-        <h1>{loggedIn ? `Welcome ${data?.user} 👋` : `Please Login First!`}</h1>
+        <h1>{`Welcome ${mainData.user} 👋`}</h1>
+        {/* <h1>{loggedIn ? `Welcome ${data?.user} 👋` : `Please Login First!`}</h1> */}
       </div>
+      <button
+        style={{
+          padding: "10px",
+          backgroundColor: "#0a0a0a",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          console.log(mainData);
+        }}
+      >
+        Console Log User
+      </button>
     </div>
   );
 }

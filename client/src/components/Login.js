@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Header from "./Header";
+import { Context } from "./Storage";
 
 function Signup() {
+  const [state, setState] = useContext(Context);
+
   React.useEffect(() => {
     // Set localStorage loggedIn to false
     localStorage.setItem("loggedIn", false);
-  }, []);
+    localStorage.setItem("token", "");
+    setState((prev) => ({ ...prev, isLoggedIn: false }));
+  }, [setState]);
 
   const history = useNavigate();
   const [inputs, setInputs] = useState({
@@ -27,7 +31,7 @@ function Signup() {
     await axios.post("http://localhost:5000/api/login", { email: inputs.email, password: inputs.password }).then((res) => {
       console.log(res.data);
       if (res.data.message === "Logged in!") {
-        console.log("test");
+        localStorage.setItem("token", res.data.accessToken);
         history("/verification");
       }
     });
@@ -41,7 +45,6 @@ function Signup() {
 
   return (
     <div>
-      <Header />
       <form onSubmit={handleSubmit}>
         <Box marginLeft="auto" marginRight="auto" maxWidth={300} display="flex" flexDirection="column" justifyContent="center" alignItems="center">
           <Typography variant="h5">Login</Typography>
@@ -71,7 +74,7 @@ function Signup() {
             }}
             margin="normal"
           />
-          <Button size="small" variant="contained" type="submit">
+          <Button sx={{ marginTop: "14px" }} size="small" variant="contained" type="submit">
             Login
           </Button>
         </Box>
