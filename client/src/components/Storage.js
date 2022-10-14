@@ -1,6 +1,8 @@
 import React from "react";
 
 const initialState = {
+  token: "",
+  blackListedTokens: [],
   isLoggedIn: false,
 };
 

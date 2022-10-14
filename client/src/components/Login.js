@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -7,12 +7,12 @@ import { Context } from "./Storage";
 function Signup() {
   const [state, setState] = useContext(Context);
 
-  React.useEffect(() => {
-    // Set localStorage loggedIn to false
-    localStorage.setItem("loggedIn", false);
-    localStorage.setItem("token", "");
+  useEffect(() => {
+    setState((prev) => ({ ...prev, token: "" }));
     setState((prev) => ({ ...prev, isLoggedIn: false }));
-  }, [setState]);
+
+    console.log(state);
+  }, []);
 
   const history = useNavigate();
   const [inputs, setInputs] = useState({
@@ -29,9 +29,8 @@ function Signup() {
 
   const sendRequest = async () => {
     await axios.post("http://localhost:5000/api/login", { email: inputs.email, password: inputs.password }).then((res) => {
-      console.log(res.data);
       if (res.data.message === "Logged in!") {
-        localStorage.setItem("token", res.data.accessToken);
+        setState((prev) => ({ ...prev, token: res.data.accessToken }));
         history("/verification");
       }
     });
@@ -39,14 +38,23 @@ function Signup() {
 
   function handleSubmit(e) {
     e.preventDefault();
-
     sendRequest();
   }
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
-        <Box marginLeft="auto" marginRight="auto" maxWidth={300} display="flex" flexDirection="column" justifyContent="center" alignItems="center">
+      <form
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          textAlign: "center",
+          margin: "0 2rem",
+        }}
+        onSubmit={handleSubmit}
+      >
+        <Box maxWidth="200px">
           <Typography variant="h5">Login</Typography>
           <TextField
             size="small"
@@ -60,6 +68,7 @@ function Signup() {
               shrink: true,
             }}
             margin="normal"
+            fullWidth
           />
           <TextField
             size="small"
@@ -73,8 +82,17 @@ function Signup() {
               shrink: true,
             }}
             margin="normal"
+            fullWidth
           />
-          <Button sx={{ marginTop: "14px" }} size="small" variant="contained" type="submit">
+          <Button
+            sx={{
+              marginTop: "14px",
+            }}
+            size="medium"
+            variant="contained"
+            type="submit"
+            fullWidth
+          >
             Login
           </Button>
         </Box>

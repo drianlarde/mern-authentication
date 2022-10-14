@@ -11,27 +11,50 @@ body {
 }
 
 .otp-ctn {
-    display: grid;
+    display: flex;
     justify-content: center;
-    justify-items: center;
+    align-items: center;
+    flex-direction: column;
     gap: 10px;
-
+    margin-top: 5rem;
 }
 
-.otp-ctn h1 {
-    font-size: 1.5rem;
+.otp-ctn-ctn {
+    margin: 0 3rem;
+    max-width: 400px;
+}
+
+.otp-ctn-ctn h3 {
+    margin-top: 12px;
+    color: rgb(190, 190, 190);
+}
+
+.otp-ctn-header {
     margin-top: 1rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 1.2rem;
+}
+
+.otpinput-ctn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 3rem 0;
+    gap: 10px;
 }
 
 .css-tccdxk {
-    max-width: 300px;
-    height: 100px;
-
+    max-width: 500px;
+    height: 200px;
 }
+
 
 .css-1tq8nf4-MuiFormControl-root-MuiTextField-root input {
     font-size: 1.5rem;
     height: 50px;
+    color: #1976d2 !important;
+
 }
 
 .welcome-ctn {
@@ -44,4 +67,8 @@ body {
     margin-left: 2rem;
     margin-right: 2rem;
     color: rgb(37, 37, 37);
+}
+
+.css-1d3z3hw-MuiOutlinedInput-notchedOutline {
+    border: 1px solid #1976d2 !important;
 }
