@@ -9,6 +9,8 @@ import React from "react";
 import Store from "./components/Storage";
 import EmailConfirmation from "./components/EmailConfirmation";
 import { NotFound } from "./components/NotFound";
+import ForgotPassword from "./components/ForgotPassword";
+import ChangePassword from "./components/ChangePassword";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
       <Store>
         <Header />
         <Routes>
+          <Route path="/forgot-password/:id" element={<ChangePassword />} />
+          <Route path="/forgot-password/send-email" element={<ForgotPassword />} />
           <Route path="/update-verified/:id" element={<EmailConfirmation />} />
           <Route path="/" element={<Login />} />
           <Route path="/" element={<Login />} />
@@ -26,6 +30,19 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Store>
+      <p
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          left: "50%",
+          width: "100%",
+          color: "lightgray",
+          transform: "translateX(-50%)",
+          textAlign: "center",
+        }}
+      >
+        Copyright ©2022 Drianlarde. Design By Abelarde
+      </p>
     </main>
   );
 }

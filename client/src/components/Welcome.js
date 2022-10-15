@@ -1,59 +1,64 @@
 import React, { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+
 import axios from "axios";
-import { Context } from "./Storage";
 import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
+
 import { Box, Button } from "@mui/material";
 import { NotFound } from "./NotFound";
+import { Context } from "./Storage";
 
 function Welcome() {
-  const [mainData, setMainData] = useState({});
+  const history = useNavigate();
   const [state, setState] = useContext(Context);
+  const [mainData, setMainData] = useState();
   const [loaderShow, setLoaderShow] = useState(true);
 
-  useEffect(() => {
-    const sendRequest = async () => {
-      await axios
-        .get("http://localhost:5000/api/user", { headers: { Authorization: `Bearer ${state.token}` } })
-        .then((res) => {
-          setState((prev) => ({ ...prev, isLoggedIn: true }));
-          setMainData(res.data);
-          setLoaderShow(false);
-        })
-        .catch((err) => {
-          console.log(err);
-          setLoaderShow(false);
-        });
-    };
+  const getCookieToken = async () => {
+    await axios
+      .get("http://localhost:5000/api/get-cookie-token", { withCredentials: true })
+      .then((res) => {
+        setMainData(res.data.user);
+        console.log(res.data.user);
+        setLoaderShow(false);
+        // Refresh page to update state
+      })
+      .catch((err) => {
+        history("/login");
+      });
+  };
 
-    sendRequest();
+  useEffect(() => {
+    getCookieToken();
   }, []);
 
   return (
     <>
       {!loaderShow ? (
-        state.isLoggedIn ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: "5rem",
+          }}
+        >
+          <h1 style={{ textAlign: "center", fontSize: "2rem", maxWidth: "450px" }}>Welcome {mainData.name} 👋</h1>
+          <h1 style={{ textAlign: "center", fontSize: "1rem", maxWidth: "450px" }}>Email: {mainData.email} </h1>
+          <h1 style={{ textAlign: "center", fontSize: "1rem", maxWidth: "300px", marginTop: "5rem", marginBottom: "1rem" }}>
+            Console Log your User Information
+          </h1>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              console.log(mainData);
             }}
           >
-            <h1 style={{ textAlign: "center", fontSize: "2rem", margin: "5rem 0", maxWidth: "450px" }}>Welcome {mainData.user} 👋</h1>
-            <h1 style={{ textAlign: "center", fontSize: "1rem", maxWidth: "300px", marginBottom: "1rem" }}>Console Log your User Information</h1>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                console.log(mainData);
-              }}
-            >
-              Console Log User
-            </Button>
-          </div>
-        ) : (
-          <NotFound />
-        )
+            Console Log User
+          </Button>
+        </div>
       ) : (
         <Box
           sx={{
@@ -63,7 +68,9 @@ function Welcome() {
             alignItems: "center",
           }}
         >
-          <CircularProgress />
+          <Box sx={{ width: "100%" }}>
+            <LinearProgress />
+          </Box>{" "}
         </Box>
       )}
     </>

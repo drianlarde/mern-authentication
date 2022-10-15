@@ -1,17 +1,41 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Box, TextField, Button, Typography } from "@mui/material";
+import { Box, TextField, Button, Typography, Snackbar } from "@mui/material";
+import MuiAlert from "@mui/material/Alert";
+import { Context } from "./Storage";
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 function Signup() {
   const history = useNavigate();
-  const [data, setData] = useState({});
-
+  const [state, setState] = useContext(Context);
   const [inputs, setInputs] = useState({
     name: "",
     email: "",
     password: "",
   });
+
+  const [open, setOpen] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState();
+
+  const logoutClearToken = async () => {
+    await axios.get("http://localhost:5000/api/delete-cookie-token", { withCredentials: true });
+  };
+
+  const handleClick = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
 
   function handleChange(e) {
     setInputs((prev) => ({
@@ -34,18 +58,40 @@ function Signup() {
       .post("http://localhost:5000/api/signup", { name: inputs.name, email: inputs.email, password: inputs.password })
       .then((res) => {
         console.log(res.data);
-        setData(res.data);
         newEmailVerification();
 
         setTimeout(() => {
           history("/login");
         }, 1000);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        setSubmitMessage(err.response.data.message);
+        handleClick();
+      });
   };
+
+  useEffect(() => {
+    console.log(inputs);
+  }, [inputs]);
+
+  useEffect(() => {
+    console.log(state);
+
+    setState((prev) => ({
+      ...prev,
+      isLoggedIn: false,
+    }));
+
+    logoutClearToken();
+  }, []);
 
   return (
     <div>
+      <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+        <Alert onClose={handleClose} severity="error" sx={{ width: "100%" }}>
+          {submitMessage}
+        </Alert>
+      </Snackbar>
       <form
         style={{
           display: "flex",

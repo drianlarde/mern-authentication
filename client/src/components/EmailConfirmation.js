@@ -24,7 +24,19 @@ function EmailConfirmation() {
     verify();
   }, [id]);
 
-  return <div>Your Encrypted ID: {id}</div>;
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        width: "100vw",
+      }}
+    >
+      <p>You're now verified! Please login.</p>
+    </div>
+  );
 }
 
 export default EmailConfirmation;

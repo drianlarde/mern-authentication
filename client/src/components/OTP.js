@@ -1,21 +1,38 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Box } from "@mui/material";
+import { Button, Box, Snackbar } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import MuiAlert from "@mui/material/Alert";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import { Context } from "./Storage";
 import { NotFound } from "./NotFound";
+import axios from "axios";
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 function OTP() {
   const history = useNavigate();
   const [state, setState] = useContext(Context);
   const [otp, setOtp] = useState(1);
   const [otpFetched, setOtpFetched] = useState(0);
-  const [data, setData] = useState({});
   const [email, setEmail] = useState("");
   const [expiredOtp, setExpiredOtp] = useState(false);
-  const [token, setToken] = useState(state.token);
   const [ctr, setCtr] = useState(0);
+  const [open, setOpen] = useState(false);
+
+  const handleClick = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
 
   const { otpInputStyle, resendButtonStyle } = {
     otpInputStyle: {
@@ -40,7 +57,6 @@ function OTP() {
     for (var i = 15; i > 0; --i) {
       (function (index) {
         setTimeout(function () {
-          console.log(15 - index);
           setCtr(15 - index);
         }, index * 1000);
       })(i);
@@ -48,7 +64,6 @@ function OTP() {
 
     const data = await res.json();
     console.log(data);
-    setData(data);
     setOtpFetched(data.code);
     setOtp(1);
     setExpiredOtp(false);
@@ -60,59 +75,75 @@ function OTP() {
     }, 15000);
   };
 
+  const createTokenCookie = async (req, res) => {
+    await axios.get("http://localhost:5000/api/set-cookie-token", { withCredentials: true }).then((res) => {
+      console.log(res.data);
+      history("/user");
+    });
+  };
+
   useEffect(() => {
     if (otp === String(otpFetched)) {
       setState((prev) => ({ ...prev, isLoggedIn: true }));
-      history("/user");
+      createTokenCookie();
+    }
+
+    if (otp !== String(otpFetched) && otp.length === 4) {
+      handleClick();
     }
   }, [state, otp, history, otpFetched, setState]);
 
   useEffect(() => {
-    sendRequest();
-    console.log(state.isLoggedIn);
     console.log(state);
+
+    if (state.isLoggedIn) {
+      history("/user");
+    } else {
+      sendRequest();
+    }
   }, []);
 
   return (
     <div>
-      {token === "" ? (
-        <NotFound />
-      ) : (
-        <div className="otp-ctn">
-          <div className="otp-ctn-ctn">
-            {/* <Button onClick={setEndTime(endTime)}></Button> */}
-            <h1 style={{ fontWeight: "700", fontSize: "32px", color: "#11151a" }} className="otp-ctn-header">
-              OTP Verification
-            </h1>
-            <h3 style={{ lineHeight: "1.5" }}>
-              Enter the OTP you received to <span style={{ fontWeight: "500", color: "#11151a" }}>{email}</span>
-            </h3>
-            <div className="otpinput-ctn">
-              <MuiOtpInput value={otp} onChange={handleChange} style={otpInputStyle} />
-            </div>
-            {expiredOtp ? (
-              <Button variant="outlined" endIcon={<SendIcon />} onClick={sendRequest} style={resendButtonStyle}>
+      <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+        <Alert onClose={handleClose} severity="error" sx={{ width: "100%" }}>
+          Invalid Code!
+        </Alert>
+      </Snackbar>
+      <div className="otp-ctn">
+        <div className="otp-ctn-ctn">
+          {/* <Button onClick={setEndTime(endTime)}></Button> */}
+          <h1 style={{ fontWeight: "700", fontSize: "32px", color: "#11151a" }} className="otp-ctn-header">
+            OTP Verification
+          </h1>
+          <h3 style={{ lineHeight: "1.5" }}>
+            Enter the OTP you received to <span style={{ fontWeight: "500", color: "#11151a" }}>{email}</span>
+          </h3>
+          <div className="otpinput-ctn">
+            <MuiOtpInput value={otp} onChange={handleChange} style={otpInputStyle} />
+          </div>
+          {expiredOtp ? (
+            <Button variant="outlined" endIcon={<SendIcon />} onClick={sendRequest} style={resendButtonStyle}>
+              RESEND OTP
+            </Button>
+          ) : (
+            // <p>{seconds}</p>
+
+            <Box
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+              <Button disabled variant="outlined" endIcon={<SendIcon />} onClick={sendRequest} style={resendButtonStyle}>
                 RESEND OTP
               </Button>
-            ) : (
-              // <p>{seconds}</p>
-
-              <Box
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "1rem",
-                }}
-              >
-                <Button disabled variant="outlined" endIcon={<SendIcon />} onClick={sendRequest} style={resendButtonStyle}>
-                  RESEND OTP
-                </Button>
-                <p>{ctr || 15}</p>
-              </Box>
-            )}
-          </div>
+              <p>{ctr || 15}</p>
+            </Box>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,24 +1,39 @@
-import React, { useState, useContext, useEffect } from "react";
-import { Box, TextField, Button, Typography } from "@mui/material";
-import axios from "axios";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Box, TextField, Button, Typography, Snackbar } from "@mui/material";
+import MuiAlert from "@mui/material/Alert";
 import { Context } from "./Storage";
 
-function Signup() {
-  const [state, setState] = useContext(Context);
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
-  useEffect(() => {
-    setState((prev) => ({ ...prev, token: "" }));
-    setState((prev) => ({ ...prev, isLoggedIn: false }));
-
-    console.log(state);
-  }, []);
-
+function Login() {
   const history = useNavigate();
+  const [state, setState] = useContext(Context);
   const [inputs, setInputs] = useState({
     email: "",
     password: "",
   });
+  const [open, setOpen] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState();
+
+  const handleClick = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const logoutClearToken = async () => {
+    await axios.get("http://localhost:5000/api/delete-cookie-token", { withCredentials: true });
+  };
 
   function handleChange(e) {
     setInputs((prev) => ({
@@ -28,12 +43,17 @@ function Signup() {
   }
 
   const sendRequest = async () => {
-    await axios.post("http://localhost:5000/api/login", { email: inputs.email, password: inputs.password }).then((res) => {
-      if (res.data.message === "Logged in!") {
-        setState((prev) => ({ ...prev, token: res.data.accessToken }));
-        history("/verification");
-      }
-    });
+    await axios
+      .post("http://localhost:5000/api/login", { email: inputs.email, password: inputs.password })
+      .then((res) => {
+        if (res.data.message === "Logged in!") {
+          history("/verification");
+        }
+      })
+      .catch((err) => {
+        setSubmitMessage(err.response.data.message);
+        handleClick();
+      });
   };
 
   function handleSubmit(e) {
@@ -41,8 +61,24 @@ function Signup() {
     sendRequest();
   }
 
+  useEffect(() => {
+    console.log(state);
+    setState((prev) => ({
+      ...prev,
+      isLoggedIn: false,
+    }));
+
+    logoutClearToken();
+  }, []);
+
   return (
     <div>
+      <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+        <Alert onClose={handleClose} severity="error" sx={{ width: "100%" }}>
+          {submitMessage}
+        </Alert>
+      </Snackbar>
+
       <form
         style={{
           display: "flex",
@@ -96,9 +132,19 @@ function Signup() {
             Login
           </Button>
         </Box>
+        <Button
+          style={{
+            marginTop: "1rem",
+          }}
+          onClick={() => {
+            history("/forgot-password/send-email");
+          }}
+        >
+          Forgot Password?
+        </Button>
       </form>
     </div>
   );
 }
 
-export default Signup;
+export default Login;

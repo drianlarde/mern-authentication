@@ -27,12 +27,15 @@ const signup = async (req, res, next) => {
     return res.status(400).json({ message: "User already exists!" }); // Return error if user already exists
   }
 
-  // Check if password is valid, have symbols, numbers, and letters, capital letters, and is at least 6 characters long.
-  if (!password.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{6,}$/gm)) {
-    if (!password.match(/^(?=.*[!@#$%^&*])/gm)) {
-      invalidPassMessage = invalidPassMessage + "1 special character!\n";
-    }
-    // Check if the password have number
+  var format = /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
+
+  if (
+    !password.match(/^(?=.*\d)/gm) ||
+    !password.match(/^(?=.*[a-z])/gm) ||
+    !password.match(/^(?=.*[A-Z])/gm) ||
+    !password.match(format) ||
+    password.length < 6
+  ) {
     if (!password.match(/^(?=.*\d)/gm)) {
       invalidPassMessage = invalidPassMessage + "1 number!\n";
     }
@@ -45,31 +48,19 @@ const signup = async (req, res, next) => {
       invalidPassMessage = invalidPassMessage + "1 uppercase letter!\n";
     }
     // Check if the password have 8 characters
-    if (!password.match(/^(?=.{8,})/gm)) {
+    if (password.length < 8) {
       invalidPassMessage = invalidPassMessage + "atleast 8 characters!\n";
     }
 
+    if (!format.test(password)) {
+      invalidPassMessage = invalidPassMessage + "1 special character!\n";
+    }
     return res.status(400).json({ message: invalidPassMessage });
   }
 
-  const otpCode = Math.floor(1000 + Math.random() * 9000);
-
-  const options = {
-    from: "abelardeadrianangelo@gmail.com",
-    to: email,
-    subject: "Verification",
-    text: otpCode + " is your email verification code.",
-  };
-
-  transporter.sendMail(options, (err, info) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("Email sent: " + info.response);
-    }
-  });
-
-  const hashedPassword = bcrypt.hashSync(password); // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  // const hashedPassword = bcrypt.hashSync(password); // Hash password
 
   const user = new User({
     name,
@@ -83,7 +74,7 @@ const signup = async (req, res, next) => {
     console.log(err);
   }
 
-  return res.status(200).json({ message: `Email verification sent to ${email}`, code: otpCode, id: user._id });
+  return res.status(200).json({ message: `Email verification sent to ${email}`, id: user._id });
 };
 
 const login = async (req, res, next) => {
@@ -109,31 +100,14 @@ const login = async (req, res, next) => {
   if (!isVerified.verified) {
     return res.status(400).json({ message: "Please verify your email!" });
   }
-
-  const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password); // Compare password
+  const isPasswordCorrect = await bcrypt.compare(password, existingUser.password);
 
   if (!isPasswordCorrect) {
     return res.status(400).json({ message: "Invalid email / password!" }); // Return error if password is incorrect
   }
-  const accessToken = jwt.sign({ existingUser }, process.env.ACCESS_TOKEN_SECRET);
 
   userLogged = existingUser.email;
-  return res.status(200).json({ message: "Logged in!", user: userLogged, accessToken: accessToken });
-};
-
-const getUser = async (req, res, next) => {
-  let existingUser;
-  try {
-    existingUser = await User.findOne({ email: userLogged }); // Find user by email
-  } catch {
-    return new Error(err);
-  }
-
-  if (!existingUser) {
-    return res.status(400).json({ message: "User not found. Please signup!" }); // Return error if user doesn't exist
-  }
-
-  return res.status(200).json({ message: "User found!", user: existingUser.name });
+  return res.status(200).json({ message: "Logged in!", user: userLogged });
 };
 
 const verification = async (req, res, next) => {
@@ -164,10 +138,20 @@ const verification = async (req, res, next) => {
     }
   });
 
-  return res.status(200).json({ message: `Enter the OTP you received to ${userLogged}`, code: otpCode });
+  return res.status(200).json({ message: `Enter the OTP you received to ${userLogged}`, email: userLogged, code: otpCode });
+};
+
+const setCookieToken = async (req, res) => {
+  const user = await User.findOne({ email: userLogged });
+
+  const accessToken = jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
+
+  res.cookie("token", accessToken, { httpOnly: true, path: "/", sameSite: "lax", secure: true });
+  res.cookie("email", userLogged, { httpOnly: true, path: "/", sameSite: "lax", secure: true });
+  res.send("Cookie is set");
 };
 
 exports.signup = signup;
 exports.login = login;
-exports.getUser = getUser;
 exports.verification = verification;
+exports.setCookieToken = setCookieToken;
